@@ -22,6 +22,7 @@ extern lv_obj_t * ui_Label2;
 extern lv_obj_t * ui_TabView1;
 extern lv_obj_t * ui_TabPage1;
 extern lv_obj_t * ui_version;
+extern lv_obj_t * ui_Tijdstempel;
 extern lv_obj_t * ui_Aanvoer;
 extern lv_obj_t * ui_Afvoer;
 extern lv_obj_t * ui_TabPage2;

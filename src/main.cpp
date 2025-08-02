@@ -46,6 +46,7 @@ void loop()
         web_request(aanvoer, afvoer);
         lv_label_set_text(ui_Aanvoer, String(aanvoer).c_str());
         lv_label_set_text(ui_Afvoer, String(afvoer).c_str());
+        lv_label_set_text(ui_Tijdstempel, getCurrentTime().c_str());
         lastWebRequest = millis();
     }
 

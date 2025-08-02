@@ -13,6 +13,7 @@ lv_obj_t * ui_Label2 = NULL;
 lv_obj_t * ui_TabView1 = NULL;
 lv_obj_t * ui_TabPage1 = NULL;
 lv_obj_t * ui_version = NULL;
+lv_obj_t * ui_Tijdstempel = NULL;
 lv_obj_t * ui_Aanvoer = NULL;
 lv_obj_t * ui_Afvoer = NULL;
 lv_obj_t * ui_TabPage2 = NULL;
@@ -104,6 +105,14 @@ void ui_Screen1_screen_init(void)
     lv_label_set_text(ui_version, "............................");
     lv_obj_set_style_text_font(ui_version, &lv_font_montserrat_36, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_Tijdstempel = lv_label_create(ui_TabPage1);
+    lv_obj_set_width(ui_Tijdstempel, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_Tijdstempel, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_Tijdstempel, 1);
+    lv_obj_set_y(ui_Tijdstempel, 9);
+    lv_obj_set_align(ui_Tijdstempel, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Tijdstempel, "text");
+
     ui_Aanvoer = lv_label_create(ui_TabPage1);
     lv_obj_set_width(ui_Aanvoer, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Aanvoer, LV_SIZE_CONTENT);    /// 1
@@ -163,6 +172,7 @@ void ui_Screen1_screen_destroy(void)
     ui_TabView1 = NULL;
     ui_TabPage1 = NULL;
     ui_version = NULL;
+    ui_Tijdstempel = NULL;
     ui_Aanvoer = NULL;
     ui_Afvoer = NULL;
     ui_TabPage2 = NULL;

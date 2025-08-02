@@ -4,11 +4,15 @@
 #include <Arduino.h>
 #include <WebServer.h>
 #include <Arduino_JSON.h>
+#include <time.h>
 
 extern WebServer server;
 
 void web_request(float &Aanvoer, float &Afvoer);
 String htmlPage();
 void handleRoot();
+void initializeNTP();
+String getCurrentTime();
+void updateTimeFromInternet();
 
 #endif // MYWEBSERVER_H

@@ -184,9 +184,16 @@ void initializeSystem(bool portrait)
   // Daarna pas WiFi en webserver
   IPAddress gateway(192,168,2,1);
   IPAddress subnet(255,255,255,0);
+  IPAddress primaryDNS(8,8,8,8);     // Google DNS
+  IPAddress secondaryDNS(8,8,4,4);   // Google DNS backup
   WiFi.mode(WIFI_STA);
-  WiFi.config(local_IP, gateway, subnet);
+  WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS);
   wifi_init();
+  // Initialiseer NTP tijd synchronisatie na WiFi verbinding en haal tijd éénmalig op
+  if (WiFi.status() == WL_CONNECTED) {
+    initializeNTP();
+    updateTimeFromInternet();
+  }
   ArduinoOTA.setHostname("esp32-ota");
   ArduinoOTA.begin();
   webserver_init();
