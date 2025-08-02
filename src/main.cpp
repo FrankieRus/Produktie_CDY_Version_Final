@@ -4,7 +4,7 @@
 #include "procs.h"
 #include <ArduinoOTA.h>
 #include "MyWebServer.h"
-
+// Versien 01
 // Global variables
 TFT_eSPI tft = TFT_eSPI(); 
 SPIClass touchscreenSpi = SPIClass(VSPI);
