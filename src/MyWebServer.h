@@ -11,8 +11,8 @@ extern WebServer server;
 void web_request(float &Aanvoer, float &Afvoer);
 String htmlPage();
 void handleRoot();
-void initializeNTP();
+bool getTimeFromAPI();
 String getCurrentTime();
-void updateTimeFromInternet();
+void setFallbackTime();
 
 #endif // MYWEBSERVER_H

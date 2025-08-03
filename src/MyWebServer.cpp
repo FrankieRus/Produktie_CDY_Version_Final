@@ -3,22 +3,96 @@
 #include <HTTPClient.h>
 #include <Preferences.h>
 #include <time.h>
-#include "lwip/apps/sntp.h"
 
 extern WebServer server;
 extern Preferences preferences;
 extern String version;
 extern void update_tab1();
 
-// NTP server configuratie
-const char* ntpServer = "time1.google.com";
-const long gmtOffset_sec = 3600;          // GMT+1 (Nederland)
-const int daylightOffset_sec = 3600;     // Zomertijd offset
+// Extern declaraties voor WiFi credentials uit System.cpp
+extern const char* ssid;
+extern const char* password;
+extern IPAddress local_IP;
 
-void initializeNTP() {
-    // Configureer tijd synchronisatie
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    Serial.println("NTP tijd synchronisatie gestart...");
+bool getTimeFromAPI() {
+    Serial.println("Ophalen tijd via DHCP WiFi verbinding...");
+    
+    // Maak tijdelijke DHCP verbinding
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);  // DHCP mode
+    
+    unsigned long startAttemptTime = millis();
+    const unsigned long wifiTimeout = 10000; // 10 seconden timeout
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < wifiTimeout) {
+        delay(250);
+        Serial.print(".");
+    }
+    Serial.println();
+    
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("DHCP WiFi verbinding mislukt voor tijdsync");
+        return false;
+    }
+    
+    Serial.println("DHCP WiFi verbonden voor tijdsync: " + WiFi.localIP().toString());
+    
+    // Haal tijd op via API
+    HTTPClient http;
+    http.begin("http://worldtimeapi.org/api/timezone/Europe/Amsterdam");
+    http.setTimeout(5000);
+    
+    int httpCode = http.GET();
+    bool success = false;
+    
+    if (httpCode == HTTP_CODE_OK) {
+        String payload = http.getString();
+        Serial.println("Tijd API response ontvangen");
+        
+        // Parse JSON response voor datetime veld
+        int datetimeIndex = payload.indexOf("\"datetime\":\"");
+        if (datetimeIndex != -1) {
+            datetimeIndex += 12; // Skip "datetime":"
+            String datetime = payload.substring(datetimeIndex, datetimeIndex + 19);
+            
+            // Parse datum en tijd (format: 2024-08-02T14:30:45)
+            int year = datetime.substring(0, 4).toInt();
+            int month = datetime.substring(5, 7).toInt();
+            int day = datetime.substring(8, 10).toInt();
+            int hour = datetime.substring(11, 13).toInt();
+            int minute = datetime.substring(14, 16).toInt();
+            int second = datetime.substring(17, 19).toInt();
+            
+            if (year > 2020 && month >= 1 && month <= 12) {
+                // Stel systeem tijd in
+                struct tm timeinfo;
+                timeinfo.tm_year = year - 1900;
+                timeinfo.tm_mon = month - 1;
+                timeinfo.tm_mday = day;
+                timeinfo.tm_hour = hour;
+                timeinfo.tm_min = minute;
+                timeinfo.tm_sec = second;
+                timeinfo.tm_isdst = -1;
+                
+                time_t t = mktime(&timeinfo);
+                struct timeval tv = { .tv_sec = t };
+                settimeofday(&tv, NULL);
+                
+                Serial.println("Tijd succesvol ingesteld: " + getCurrentTime());
+                success = true;
+            }
+        }
+    } else {
+        Serial.println("Tijd API mislukt, HTTP code: " + String(httpCode));
+    }
+    
+    http.end();
+    
+    // Sluit DHCP WiFi verbinding
+    WiFi.disconnect(true);
+    delay(1000);
+    Serial.println("DHCP WiFi verbinding gesloten");
+    
+    return success;
 }
 
 String getCurrentTime() {
@@ -33,63 +107,22 @@ String getCurrentTime() {
     return String(timeStringBuff);
 }
 
-void updateTimeFromInternet() {
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("Tijd wordt bijgewerkt van internet...");
-        Serial.print("WiFi IP: "); Serial.println(WiFi.localIP());
-        Serial.print("Gateway: "); Serial.println(WiFi.gatewayIP());
-        Serial.print("DNS: "); Serial.println(WiFi.dnsIP());
-        
-        // Gebruik alleen NTP met IP-adressen (geen DNS)
-        // Google NTP servers: 216.239.35.0, 216.239.35.4, 216.239.35.8, 216.239.35.12
-        Serial.println("Configureer NTP met IP-adressen...");
-        
-        // Stop oude NTP en start opnieuw
-        sntp_stop();
-        delay(100);
-        
-        sntp_setoperatingmode(SNTP_OPMODE_POLL);
-        sntp_setservername(0, "216.239.35.0");  // time1.google.com IP
-        sntp_setservername(1, "216.239.35.4");  // time2.google.com IP
-        sntp_init();
-        
-        Serial.println("Wacht op NTP synchronisatie...");
-        
-        // Wacht maximaal 10 seconden
-        struct tm timeinfo;
-        int attempts = 0;
-        const int maxAttempts = 20; // 20x 500ms = 10s
-        
-        while (!getLocalTime(&timeinfo) && attempts < maxAttempts) {
-            Serial.print(".");
-            delay(500);
-            attempts++;
-        }
-        Serial.println();
-        
-        if (attempts < maxAttempts && timeinfo.tm_year > (2020-1900)) {
-            Serial.println("NTP tijd succesvol bijgewerkt: " + getCurrentTime());
-        } else {
-            Serial.println("NTP synchronisatie mislukt. Handmatig een standaard tijd instellen...");
-            
-            // Stel handmatig een redelijke tijd in als backup (bijv. 1 jan 2025, 12:00)
-            timeinfo.tm_year = 2025 - 1900;
-            timeinfo.tm_mon = 0;  // Januari
-            timeinfo.tm_mday = 1;
-            timeinfo.tm_hour = 12;
-            timeinfo.tm_min = 0;
-            timeinfo.tm_sec = 0;
-            timeinfo.tm_isdst = 0;
-            
-            time_t t = mktime(&timeinfo);
-            struct timeval tv = { .tv_sec = t };
-            settimeofday(&tv, NULL);
-            
-            Serial.println("Backup tijd ingesteld: " + getCurrentTime());
-        }
-    } else {
-        Serial.println("Geen WiFi verbinding voor tijd synchronisatie");
-    }
+void setFallbackTime() {
+    // Stel een redelijke standaardtijd in als backup (3 aug 2025, 12:00)
+    struct tm timeinfo;
+    timeinfo.tm_year = 2025 - 1900;
+    timeinfo.tm_mon = 7; // Augustus (0-11)
+    timeinfo.tm_mday = 3;
+    timeinfo.tm_hour = 12;
+    timeinfo.tm_min = 0;
+    timeinfo.tm_sec = 0;
+    timeinfo.tm_isdst = 0;
+    
+    time_t t = mktime(&timeinfo);
+    struct timeval tv = { .tv_sec = t };
+    settimeofday(&tv, NULL);
+    
+    Serial.println("Fallback tijd ingesteld: " + getCurrentTime());
 }
 
 void web_request(float &Aanvoer, float &Afvoer) {

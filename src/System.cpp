@@ -9,10 +9,6 @@
 #include <Preferences.h>
 #include "MyWebServer.h"
 
-// Vast IP adres van WIFI
-IPAddress local_IP(192,168,2,118);
-
-
 WebServer server(80);
 Preferences preferences;
 String version;
@@ -31,8 +27,10 @@ uint16_t TFT_HOR_RES = 320;
 uint16_t TFT_VER_RES = 240;
 uint32_t DRAW_BUF_SIZE = 0;
 
+// WiFi credentials - beschikbaar maken voor tijdsync
 const char* ssid = "ORBI";
 const char* password = "marrrr222";
+IPAddress local_IP(192,168,2,118);
 
 void wifi_init() {
     WiFi.begin(ssid, password);
@@ -181,7 +179,17 @@ void initializeSystem(bool portrait)
   ui_init();
   lv_timer_handler(); // Forceer eerste refresh
 
-  // Daarna pas WiFi en webserver
+  // Eerst tijd ophalen via DHCP verbinding
+  Serial.println("=== Start tijdsynchronisatie ===");
+  bool timeSuccess = getTimeFromAPI();
+  if (!timeSuccess) {
+    Serial.println("Web API tijdsync mislukt, gebruik fallback tijd");
+    setFallbackTime();
+  }
+  Serial.println("=== Tijdsynchronisatie voltooid ===");
+
+  // Nu vaste IP WiFi verbinding maken voor normale werking
+  Serial.println("=== Start vaste IP WiFi verbinding ===");
   IPAddress gateway(192,168,2,1);
   IPAddress subnet(255,255,255,0);
   IPAddress primaryDNS(8,8,8,8);     // Google DNS
@@ -189,12 +197,25 @@ void initializeSystem(bool portrait)
   WiFi.mode(WIFI_STA);
   WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS);
   wifi_init();
-  // Initialiseer NTP tijd synchronisatie na WiFi verbinding en haal tijd éénmalig op
+  
   if (WiFi.status() == WL_CONNECTED) {
-    initializeNTP();
-    updateTimeFromInternet();
+    Serial.println("Vaste IP WiFi verbinding succesvol: " + WiFi.localIP().toString());
+  } else {
+    Serial.println("Vaste IP WiFi verbinding mislukt");
   }
+  
   ArduinoOTA.setHostname("esp32-ota");
   ArduinoOTA.begin();
   webserver_init();
+  
+  // Voer meteen een eerste temperatuur request uit na initialisatie
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Eerste temperatuur request uitvoeren...");
+    float aanvoer = 0, afvoer = 0;
+    web_request(aanvoer, afvoer);
+    lv_label_set_text(ui_Aanvoer, String(aanvoer).c_str());
+    lv_label_set_text(ui_Afvoer, String(afvoer).c_str());
+    lv_label_set_text(ui_Tijdstempel, getCurrentTime().c_str());
+    Serial.println("Eerste temperatuur data opgehaald");
+  }
 }
