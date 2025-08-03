@@ -8,6 +8,7 @@
 #include <Arduino_JSON.h>
 #include <Preferences.h>
 #include "MyWebServer.h"
+#include "procs.h"
 
 WebServer server(80);
 Preferences preferences;
@@ -213,9 +214,8 @@ void initializeSystem(bool portrait)
     Serial.println("Eerste temperatuur request uitvoeren...");
     float aanvoer = 0, afvoer = 0;
     web_request(aanvoer, afvoer);
-    lv_label_set_text(ui_Aanvoer, String(aanvoer).c_str());
-    lv_label_set_text(ui_Afvoer, String(afvoer).c_str());
-    lv_label_set_text(ui_Tijdstempel, getCurrentTime().c_str());
-    Serial.println("Eerste temperatuur data opgehaald");
+    float temperature = 0, humidity = 0, pressure = 0, bmp_temp = 0, altitude = 0;
+    weather_request(temperature, humidity, pressure, bmp_temp, altitude);
+    update_labels(aanvoer, afvoer, temperature, pressure);
   }
 }

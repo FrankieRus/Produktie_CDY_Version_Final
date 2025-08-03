@@ -9,6 +9,7 @@
 extern WebServer server;
 
 void web_request(float &Aanvoer, float &Afvoer);
+void weather_request(float &temperature, float &humidity, float &pressure, float &bmp_temp, float &altitude);
 String htmlPage();
 void handleRoot();
 bool getTimeFromAPI();

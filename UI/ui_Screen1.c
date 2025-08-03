@@ -6,29 +6,19 @@
 #include "ui.h"
 
 lv_obj_t * ui_Screen1 = NULL;
-lv_obj_t * ui_Button1 = NULL;
-lv_obj_t * ui_Label1 = NULL;
-lv_obj_t * ui_Button2 = NULL;
-lv_obj_t * ui_Label2 = NULL;
 lv_obj_t * ui_TabView1 = NULL;
 lv_obj_t * ui_TabPage1 = NULL;
 lv_obj_t * ui_version = NULL;
 lv_obj_t * ui_Tijdstempel = NULL;
 lv_obj_t * ui_Aanvoer = NULL;
 lv_obj_t * ui_Afvoer = NULL;
+lv_obj_t * ui_Woonkamer = NULL;
+lv_obj_t * ui_Luchtdruk = NULL;
 lv_obj_t * ui_TabPage2 = NULL;
 lv_obj_t * ui_Label4 = NULL;
 lv_obj_t * ui_TabPage3 = NULL;
 lv_obj_t * ui_Label5 = NULL;
 // event funtions
-void ui_event_Button1(lv_event_t * e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-
-    if(event_code == LV_EVENT_CLICKED) {
-        button1klik(e);
-    }
-}
 
 // build funtions
 
@@ -41,50 +31,12 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_style_bg_image_recolor(ui_Screen1, lv_color_hex(0x4067FF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_image_recolor_opa(ui_Screen1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_Button1 = lv_button_create(ui_Screen1);
-    lv_obj_set_width(ui_Button1, 81);
-    lv_obj_set_height(ui_Button1, 41);
-    lv_obj_set_x(ui_Button1, -107);
-    lv_obj_set_y(ui_Button1, -94);
-    lv_obj_set_align(ui_Button1, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_Button1, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
-    lv_obj_remove_flag(ui_Button1, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_obj_set_style_bg_color(ui_Button1, lv_color_hex(0xC8F10A), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_Button1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_Label1 = lv_label_create(ui_Button1);
-    lv_obj_set_width(ui_Label1, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_Label1, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_align(ui_Label1, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_Label1, "But1");
-    lv_obj_set_style_text_color(ui_Label1, lv_color_hex(0x080808), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_Label1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_Button2 = lv_button_create(ui_Screen1);
-    lv_obj_set_width(ui_Button2, 90);
-    lv_obj_set_height(ui_Button2, 40);
-    lv_obj_set_x(ui_Button2, 104);
-    lv_obj_set_y(ui_Button2, -95);
-    lv_obj_set_align(ui_Button2, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_Button2, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
-    lv_obj_remove_flag(ui_Button2, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_obj_set_style_bg_color(ui_Button2, lv_color_hex(0xC8F10A), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_Button2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    ui_Label2 = lv_label_create(ui_Button2);
-    lv_obj_set_width(ui_Label2, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_Label2, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_align(ui_Label2, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_Label2, "But2");
-    lv_obj_set_style_text_color(ui_Label2, lv_color_hex(0x2C3BAB), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_Label2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
     ui_TabView1 = lv_tabview_create(ui_Screen1);
     lv_tabview_set_tab_bar_size(ui_TabView1, 25);
-    lv_obj_set_width(ui_TabView1, 295);
-    lv_obj_set_height(ui_TabView1, 172);
-    lv_obj_set_x(ui_TabView1, 0);
-    lv_obj_set_y(ui_TabView1, 26);
+    lv_obj_set_width(ui_TabView1, 319);
+    lv_obj_set_height(ui_TabView1, 228);
+    lv_obj_set_x(ui_TabView1, -1);
+    lv_obj_set_y(ui_TabView1, -1);
     lv_obj_set_align(ui_TabView1, LV_ALIGN_CENTER);
     lv_obj_remove_flag(ui_TabView1, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_bg_color(ui_TabView1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -99,8 +51,8 @@ void ui_Screen1_screen_init(void)
     ui_version = lv_label_create(ui_TabPage1);
     lv_obj_set_width(ui_version, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_version, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_version, 3);
-    lv_obj_set_y(ui_version, -39);
+    lv_obj_set_x(ui_version, 2);
+    lv_obj_set_y(ui_version, -78);
     lv_obj_set_align(ui_version, LV_ALIGN_CENTER);
     lv_label_set_text(ui_version, "............................");
     lv_obj_set_style_text_font(ui_version, &lv_font_montserrat_36, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -108,16 +60,17 @@ void ui_Screen1_screen_init(void)
     ui_Tijdstempel = lv_label_create(ui_TabPage1);
     lv_obj_set_width(ui_Tijdstempel, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Tijdstempel, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Tijdstempel, 1);
-    lv_obj_set_y(ui_Tijdstempel, 9);
+    lv_obj_set_x(ui_Tijdstempel, -6);
+    lv_obj_set_y(ui_Tijdstempel, -47);
     lv_obj_set_align(ui_Tijdstempel, LV_ALIGN_CENTER);
     lv_label_set_text(ui_Tijdstempel, "text");
+    lv_obj_set_style_text_font(ui_Tijdstempel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_Aanvoer = lv_label_create(ui_TabPage1);
     lv_obj_set_width(ui_Aanvoer, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Aanvoer, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Aanvoer, -61);
-    lv_obj_set_y(ui_Aanvoer, 41);
+    lv_obj_set_x(ui_Aanvoer, -2);
+    lv_obj_set_y(ui_Aanvoer, 33);
     lv_obj_set_align(ui_Aanvoer, LV_ALIGN_CENTER);
     lv_label_set_text(ui_Aanvoer, "text");
     lv_obj_set_style_text_font(ui_Aanvoer, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -125,11 +78,29 @@ void ui_Screen1_screen_init(void)
     ui_Afvoer = lv_label_create(ui_TabPage1);
     lv_obj_set_width(ui_Afvoer, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Afvoer, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Afvoer, 72);
-    lv_obj_set_y(ui_Afvoer, 41);
+    lv_obj_set_x(ui_Afvoer, -1);
+    lv_obj_set_y(ui_Afvoer, 64);
     lv_obj_set_align(ui_Afvoer, LV_ALIGN_CENTER);
     lv_label_set_text(ui_Afvoer, "text");
     lv_obj_set_style_text_font(ui_Afvoer, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Woonkamer = lv_label_create(ui_TabPage1);
+    lv_obj_set_width(ui_Woonkamer, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_Woonkamer, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_Woonkamer, -3);
+    lv_obj_set_y(ui_Woonkamer, -22);
+    lv_obj_set_align(ui_Woonkamer, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Woonkamer, "text");
+    lv_obj_set_style_text_font(ui_Woonkamer, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_Luchtdruk = lv_label_create(ui_TabPage1);
+    lv_obj_set_width(ui_Luchtdruk, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_Luchtdruk, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_Luchtdruk, -2);
+    lv_obj_set_y(ui_Luchtdruk, 5);
+    lv_obj_set_align(ui_Luchtdruk, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Luchtdruk, "text");
+    lv_obj_set_style_text_font(ui_Luchtdruk, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_TabPage2 = lv_tabview_add_tab(ui_TabView1, "Title 2");
     lv_obj_set_style_bg_color(ui_TabPage2, lv_color_hex(0x250DDE), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -155,8 +126,6 @@ void ui_Screen1_screen_init(void)
     lv_obj_set_align(ui_Label5, LV_ALIGN_CENTER);
     lv_label_set_text(ui_Label5, "text3");
 
-    lv_obj_add_event_cb(ui_Button1, ui_event_Button1, LV_EVENT_ALL, NULL);
-
 }
 
 void ui_Screen1_screen_destroy(void)
@@ -165,16 +134,14 @@ void ui_Screen1_screen_destroy(void)
 
     // NULL screen variables
     ui_Screen1 = NULL;
-    ui_Button1 = NULL;
-    ui_Label1 = NULL;
-    ui_Button2 = NULL;
-    ui_Label2 = NULL;
     ui_TabView1 = NULL;
     ui_TabPage1 = NULL;
     ui_version = NULL;
     ui_Tijdstempel = NULL;
     ui_Aanvoer = NULL;
     ui_Afvoer = NULL;
+    ui_Woonkamer = NULL;
+    ui_Luchtdruk = NULL;
     ui_TabPage2 = NULL;
     ui_Label4 = NULL;
     ui_TabPage3 = NULL;

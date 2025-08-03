@@ -142,6 +142,34 @@ void web_request(float &Aanvoer, float &Afvoer) {
     }
 }
 
+void weather_request(float &temperature, float &humidity, float &pressure, float &bmp_temp, float &altitude) {
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        http.begin("http://192.168.2.120/api");
+        int httpCode = http.GET();
+        if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            Serial.println("Weather API response: " + payload);
+            JSONVar doc = JSON.parse(payload);
+            if (JSON.typeof(doc) == "object") {
+                temperature = (double)doc["temperature"];
+                humidity = (double)doc["humidity"];
+                pressure = (double)doc["pressure"];
+                bmp_temp = (double)doc["bmp_temp"];
+                altitude = (double)doc["altitude"];
+                Serial.println("Weather data parsed successfully");
+            } else {
+                Serial.println("Weather JSON parse failed");
+            }
+        } else {
+            Serial.println("Weather API failed, HTTP code: " + String(httpCode));
+        }
+        http.end();
+    } else {
+        Serial.println("No WiFi connection for weather request");
+    }
+}
+
 String htmlPage() {
     String page = "<html><head><title>Version Update</title></head><body>";
     page += "<h2>Update Version</h2>";

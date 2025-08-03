@@ -32,6 +32,7 @@ void setup()
 // ...existing code...
 unsigned long lastWebRequest = 0;
 float aanvoer = 0, afvoer = 0;
+float temperature = 0, humidity = 0, pressure = 0, bmp_temp = 0, altitude = 0;
 
 void loop()
 {   
@@ -41,12 +42,11 @@ void loop()
     webserver_loop();
     ArduinoOTA.handle();
 
-    // Elke 30 seconden web_request uitvoeren
+    // Elke 30 seconden web_request en weather_request uitvoeren
     if (millis() - lastWebRequest > 30000) {
         web_request(aanvoer, afvoer);
-        lv_label_set_text(ui_Aanvoer, String(aanvoer).c_str());
-        lv_label_set_text(ui_Afvoer, String(afvoer).c_str());
-        lv_label_set_text(ui_Tijdstempel, getCurrentTime().c_str());
+        weather_request(temperature, humidity, pressure, bmp_temp, altitude);
+        update_labels(aanvoer, afvoer, temperature, pressure);
         lastWebRequest = millis();
     }
 
