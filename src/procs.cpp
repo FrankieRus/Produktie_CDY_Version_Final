@@ -40,9 +40,9 @@ void TabWissel(lv_event_t * e)
 }
 
 void update_labels(float aanvoer, float afvoer, float temperature, float pressure) {
-    lv_label_set_text(ui_Aanvoer, (String("WP Aanvoer: ") + String(aanvoer)).c_str());
-    lv_label_set_text(ui_Afvoer, (String("WP Afvoer: ") + String(afvoer)).c_str());
-    lv_label_set_text(ui_Woonkamer, (String("Woonkamer: ") + String(temperature)).c_str());
+    lv_label_set_text(ui_Aanvoer, (String("WP Aanvoer: ") + String(aanvoer,2)).c_str());
+    lv_label_set_text(ui_Afvoer, (String("WP Afvoer: ") + String(afvoer,2)).c_str());
+    lv_label_set_text(ui_Woonkamer, (String("Woonkamer: ") + String(temperature,2)).c_str());
     lv_label_set_text(ui_Luchtdruk, (String("Luchtdruk: ") + String(pressure)).c_str());
     lv_label_set_text(ui_Tijdstempel, getCurrentTime().c_str());
 }

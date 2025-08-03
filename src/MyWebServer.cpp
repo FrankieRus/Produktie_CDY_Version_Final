@@ -36,56 +36,116 @@ bool getTimeFromAPI() {
     
     Serial.println("DHCP WiFi verbonden voor tijdsync: " + WiFi.localIP().toString());
     
-    // Haal tijd op via API
-    HTTPClient http;
-    http.begin("http://worldtimeapi.org/api/timezone/Europe/Amsterdam");
-    http.setTimeout(5000);
-    
-    int httpCode = http.GET();
+    // Probeer meerdere keren tijd op te halen voor betere betrouwbaarheid
     bool success = false;
+    int attempts = 0;
+    const int maxAttempts = 3;
     
-    if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
-        Serial.println("Tijd API response ontvangen");
+    while (!success && attempts < maxAttempts) {
+        attempts++;
+        Serial.println("Tijdsync poging " + String(attempts) + " van " + String(maxAttempts));
         
-        // Parse JSON response voor datetime veld
-        int datetimeIndex = payload.indexOf("\"datetime\":\"");
-        if (datetimeIndex != -1) {
-            datetimeIndex += 12; // Skip "datetime":"
-            String datetime = payload.substring(datetimeIndex, datetimeIndex + 19);
+        HTTPClient http;
+        http.begin("http://worldclockapi.com/api/json/cet/now");
+        http.setTimeout(8000); // Langere timeout
+        
+        int httpCode = http.GET();
+        
+        if (httpCode == HTTP_CODE_OK) {
+            String payload = http.getString();
+            Serial.println("Tijd API response ontvangen");
+            Serial.println("Response: " + payload.substring(0, 200)); // Debug output
             
-            // Parse datum en tijd (format: 2024-08-02T14:30:45)
-            int year = datetime.substring(0, 4).toInt();
-            int month = datetime.substring(5, 7).toInt();
-            int day = datetime.substring(8, 10).toInt();
-            int hour = datetime.substring(11, 13).toInt();
-            int minute = datetime.substring(14, 16).toInt();
-            int second = datetime.substring(17, 19).toInt();
-            
-            if (year > 2020 && month >= 1 && month <= 12) {
-                // Stel systeem tijd in
-                struct tm timeinfo;
-                timeinfo.tm_year = year - 1900;
-                timeinfo.tm_mon = month - 1;
-                timeinfo.tm_mday = day;
-                timeinfo.tm_hour = hour;
-                timeinfo.tm_min = minute;
-                timeinfo.tm_sec = second;
-                timeinfo.tm_isdst = -1;
-                
-                time_t t = mktime(&timeinfo);
-                struct timeval tv = { .tv_sec = t };
-                settimeofday(&tv, NULL);
-                
-                Serial.println("Tijd succesvol ingesteld: " + getCurrentTime());
-                success = true;
+            // Parse JSON response - worldclockapi gebruikt "currentDateTime"
+            int datetimeIndex = payload.indexOf("\"currentDateTime\":\"");
+            if (datetimeIndex == -1) {
+                // Fallback naar andere mogelijke velden
+                datetimeIndex = payload.indexOf("\"datetime\":\"");
+                if (datetimeIndex != -1) {
+                    datetimeIndex += 12; // Skip "datetime":"
+                }
+            } else {
+                datetimeIndex += 18; // Skip "currentDateTime":"
             }
+            
+            if (datetimeIndex != -1) {
+                String datetime = payload.substring(datetimeIndex, datetimeIndex + 30); // Langere string voor parsing
+                Serial.println("Gevonden datetime string: " + datetime);
+                
+                // Zoek het einde van de datetime waarde (tot " of , of })
+                int endIndex = datetime.indexOf('"');
+                if (endIndex == -1) endIndex = datetime.indexOf(',');
+                if (endIndex == -1) endIndex = datetime.indexOf('}');
+                if (endIndex > 0) {
+                    datetime = datetime.substring(0, endIndex);
+                }
+                
+                // Verwijder eventuele aanhalingstekens aan het begin
+                if (datetime.startsWith("\"")) {
+                    datetime = datetime.substring(1);
+                }
+                
+                Serial.println("Schone datetime string: " + datetime);
+                
+                // Parse datum en tijd (format: 2025-08-03T15:33+02:00)
+                if (datetime.length() >= 16 && datetime.indexOf('T') > 0) {
+                    int year = datetime.substring(0, 4).toInt();
+                    int month = datetime.substring(5, 7).toInt();
+                    int day = datetime.substring(8, 10).toInt();
+                    int hour = datetime.substring(11, 13).toInt();
+                    int minute = datetime.substring(14, 16).toInt();
+                    
+                    // Controleer of er seconden zijn (karakter op positie 16 is ':' of '+')
+                    int second = 0;
+                    if (datetime.length() > 16 && datetime.charAt(16) == ':') {
+                        second = datetime.substring(17, 19).toInt();
+                    } else {
+                        second = 0; // Geen seconden in de string
+                    }
+                    
+                    Serial.println("Geparseerd: " + String(year) + "-" + String(month) + "-" + String(day) + " " + String(hour) + ":" + String(minute) + ":" + String(second));
+                    
+                    if (year > 2020 && month >= 1 && month <= 12 && day >= 1 && day <= 31 && hour >= 0 && hour <= 23) {
+                        // Stel systeem tijd in
+                        struct tm timeinfo;
+                        timeinfo.tm_year = year - 1900;
+                        timeinfo.tm_mon = month - 1;
+                        timeinfo.tm_mday = day;
+                        timeinfo.tm_hour = hour;
+                        timeinfo.tm_min = minute;
+                        timeinfo.tm_sec = second;
+                        timeinfo.tm_isdst = -1;
+                        
+                        time_t t = mktime(&timeinfo);
+                        struct timeval tv = { .tv_sec = t };
+                        settimeofday(&tv, NULL);
+                        
+                        Serial.println("Tijd succesvol ingesteld: " + getCurrentTime());
+                        success = true;
+                    } else {
+                        Serial.println("Ongeldige datum ontvangen");
+                    }
+                } else {
+                    Serial.println("Datetime string te kort");
+                }
+            } else {
+                Serial.println("Kan datetime niet vinden in response");
+            }
+        } else {
+            Serial.println("Tijd API mislukt, HTTP code: " + String(httpCode));
         }
-    } else {
-        Serial.println("Tijd API mislukt, HTTP code: " + String(httpCode));
+        
+        http.end();
+        
+        if (!success && attempts < maxAttempts) {
+            Serial.println("Wacht 2 seconden voor volgende poging...");
+            delay(2000);
+        }
     }
     
-    http.end();
+    if (!success) {
+        Serial.println("Alle tijdsync pogingen mislukt na " + String(maxAttempts) + " pogingen");
+    }
     
     // Sluit DHCP WiFi verbinding
     WiFi.disconnect(true);
